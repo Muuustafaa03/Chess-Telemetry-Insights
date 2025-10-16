@@ -34,3 +34,22 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+# Chess Telemetry Insights ♟️
+a production-like dashboard that ingests events (API calls, errors, latency), stores them, visualizes trends, and adds an AI “Insights” panel that explains what changed and why.
+
+Frontend: Next.js + React + Tailwind
+
+Backend: Next.js API routes (Node/Express style) or a small Express server
+
+DB: Postgres (Railway/Render free tier)
+
+ORM: Prisma
+
+Charts: Recharts
+
+Auth (optional): NextAuth (GitHub provider)
+
+AI: OpenAI API (insights summary)
+
+Deploy: Vercel (frontend+API) + Railway (Postgres)
