@@ -113,8 +113,7 @@ Railway (Database):
 2. Enable External Connection and copy the connection string.  
 3. Use that string in both local and Vercel `.env` (?sslmode=require).  
 
-📊 Project Structure
-
+## 📊 Project Structure
 app/
   api/
     summary/route.ts    # always-available local insights
@@ -129,8 +128,6 @@ prisma/
   schema.prisma         # Event model
 scripts/
   ingest_chess.ts       # Chess.com ingestion script
-
-
 
 ## 🧭 Future Roadmap
 - Extend telemetry to other games (Clash Royale, Pokémon TCG)  
