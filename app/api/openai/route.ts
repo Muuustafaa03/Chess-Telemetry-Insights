@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import OpenAI from "openai";
+import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -12,8 +13,12 @@ export async function GET(req: Request) {
   const now = new Date();
   const since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  const where: any = { service: "chess", createdAt: { gte: since } };
-  if (player) where.player = player;
+  // ✅ Use Prisma.EventWhereInput instead of `any`
+  const where: Prisma.EventWhereInput = {
+    service: "chess",
+    createdAt: { gte: since },
+    ...(player ? { player } : {}),
+  };
 
   const rows = await prisma.event.findMany({
     where,

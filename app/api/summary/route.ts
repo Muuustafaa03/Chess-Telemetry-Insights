@@ -1,5 +1,7 @@
+// app/api/summary/route.ts  (or the file you’re editing)
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";          // ✅ bring prisma back
+import type { Prisma } from "@prisma/client";
 
 // Force runtime execution in Next 15 dev/prod (no static caching)
 export const dynamic = "force-dynamic";
@@ -12,8 +14,12 @@ export async function GET(req: Request) {
   const now = new Date();
   const since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  const where: any = { service: "chess", createdAt: { gte: since } };
-  if (player) where.player = player;
+  // ✅ typed filter; player is conditionally included via spread
+  const where: Prisma.EventWhereInput = {
+    service: "chess",
+    createdAt: { gte: since },
+    ...(player ? { player } : {}),
+  };
 
   const rows = await prisma.event.findMany({
     where,
@@ -22,7 +28,7 @@ export async function GET(req: Request) {
   });
 
   const total = rows.length;
-  const wins = rows.filter(r => r.status === 1).length;
+  const wins = rows.filter((r) => r.status === 1).length;
   const winRate = total ? wins / total : 0;
 
   const byTc: Record<string, { g: number; w: number }> = {};
@@ -32,9 +38,9 @@ export async function GET(req: Request) {
     byTc[k].g += 1;
     if (r.status === 1) byTc[k].w += 1;
   }
-  const arr = Object.entries(byTc).map(([k, v]) => ({
-    k, wr: v.g ? v.w / v.g : 0, g: v.g,
-  })).sort((a, b) => b.g - a.g);
+  const arr = Object.entries(byTc)
+    .map(([k, v]) => ({ k, wr: v.g ? v.w / v.g : 0, g: v.g }))
+    .sort((a, b) => b.g - a.g);
 
   const top = arr[0];
   const low = [...arr].sort((a, b) => a.wr - b.wr)[0];
