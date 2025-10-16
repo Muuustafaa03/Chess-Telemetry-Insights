@@ -43,21 +43,22 @@ Works out-of-the-box with any Chess.com username and supports local or OpenAI-po
 ---
 
 ## 🚀 Live Demo
-**App:** [https://chess-telemetry-insights-jhis-hdijy5sa0.vercel.app]
-**Repo:** [https://github.com/Muuustafaa03/chess-telemetry-insights]
+**App:** [https://chess-telemetry-insights-jhis-hdijy5sa0.vercel.app](https://chess-telemetry-insights-jhis-hdijy5sa0.vercel.app)  
+**Repo:** [https://github.com/Muuustafaa03/chess-telemetry-insights](https://github.com/Muuustafaa03/chess-telemetry-insights)
 
 ---
 
 ## 🧠 Features
-- **Automatic data ingestion:** Pulls recent Chess.com games and stores them in PostgreSQL.
-- **Interactive analytics:** 7-day KPIs, 30-day game volume, and 60-day win-rate charts by time control.
-- **AI or local summaries:** Generates concise weekly insights using a heuristic engine or OpenAI Responses API.
-- **Multi-player support:** Filter dashboard data by any player.
-- **One-click deploy:** Built with Vercel + Railway for instant full-stack hosting.
+- **Automatic data ingestion:** Pulls recent Chess.com games and stores them in PostgreSQL.  
+- **Interactive analytics:** 7-day KPIs, 30-day game volume, and 60-day win-rate charts by time control.  
+- **AI or local summaries:** Generates concise weekly insights using a heuristic engine or OpenAI Responses API.  
+- **Multi-player support:** Filter dashboard data by any player.  
+- **One-click deploy:** Built with Vercel + Railway for instant full-stack hosting.  
 
 ---
 
 ## 🧱 Tech Stack
+
 | Layer | Technologies |
 |-------|---------------|
 | **Frontend** | Next.js 15 · React 19 · TypeScript · TailwindCSS · Recharts |
@@ -68,58 +69,72 @@ Works out-of-the-box with any Chess.com username and supports local or OpenAI-po
 
 ---
 
-⚙️ Local Setup
+## ⚙️ Local Setup
 
-1️⃣ Clone and install
-
-bash
+### 1️⃣ Clone and install
+```bash
 git clone https://github.com/Muuustafaa03/chess-telemetry-insights
 cd chess-telemetry-insights
 npm install
-
 2️⃣ Set up your environment
-
 Copy the example file and fill in your credentials:
 
+bash
+Copy code
 cp env.example .env
-
 Inside .env, set your Railway database URL (external connection string):
 
+ini
+Copy code
 DATABASE_URL="postgresql://user:password@host:port/railway?sslmode=require"
-
 3️⃣ Run migrations
-
+bash
+Copy code
 npx prisma migrate dev
+♟️ Uploading Your Own Chess Data
+You can ingest your own Chess.com games into the dashboard with a single command.
 
-♟️ Uploading Your Own Chess Data 
-
-1. Find your Chess.com username (case-insensitive).
-
+Find your Chess.com username (case-insensitive).
 Example: magnuscarlsen
 
-2. Run npx ts-node scripts/ingest_chess.ts <your_username>
+Run:
 
-Example: npx ts-node scripts/ingest_chess.ts magnuscarlsen
+bash
+Copy code
+npx ts-node scripts/ingest_chess.ts <your_username>
+Example:
 
-3. The script will:
-- Fetch your recent games from the Chess.com API
-- Store them as telemetry events in your PostgreSQL database
-- Print how many were added
-- Populate your dashboard instantly on refresh
-- Re-run this anytime to pull new data.
+bash
+Copy code
+npx ts-node scripts/ingest_chess.ts magnuscarlsen
+The script will:
 
-🔌 Optional: Enable AI Insights 
+Fetch your recent games from the Chess.com API
 
-1. Add the following to .env:
-- OPENAI_API_KEY="sk-..."
-- OPENAI_ORG="org_..."
-- OPENAI_PROJECT="proj_..."
+Store them as telemetry events in your PostgreSQL database
 
-2. Use the /api/openai endpoint (already included in the project).
+Print how many were added
+
+Populate your dashboard instantly on refresh
+
+Re-run this anytime to pull new data.
+
+🔌 Optional: Enable AI Insights
+To generate summaries with OpenAI instead of the local heuristic model:
+
+Add the following to .env:
+
+ini
+Copy code
+OPENAI_API_KEY="sk-..."
+OPENAI_ORG="org_..."
+OPENAI_PROJECT="proj_..."
+Use the /api/openai endpoint (already included in the project).
 If not configured, the dashboard automatically uses local summaries.
 
 📊 Project Structure
-
+bash
+Copy code
 app/
   api/
     summary/route.ts    # always-available local insights
@@ -134,9 +149,7 @@ prisma/
   schema.prisma         # Event model
 scripts/
   ingest_chess.ts       # Chess.com ingestion script
-
-🧭 Future Roadmap 
-
+🧭 Future Roadmap
 Extend telemetry to other games (Clash Royale, Pokémon TCG)
 
 Add leaderboards and personalized accounts
