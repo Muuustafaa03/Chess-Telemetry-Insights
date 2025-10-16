@@ -131,6 +131,7 @@ scripts/
   ingest_chess.ts       # Chess.com ingestion script
 
 
+
 ## 🧭 Future Roadmap
 - Extend telemetry to other games (Clash Royale, Pokémon TCG)  
 - Add leaderboards and personalized accounts  
