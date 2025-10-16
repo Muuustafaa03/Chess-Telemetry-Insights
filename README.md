@@ -114,20 +114,22 @@ Railway (Database):
 3. Use that string in both local and Vercel `.env` (?sslmode=require).  
 
 ## 📊 Project Structure
+
 app/
-api/
-summary/route.ts # always-available local insights
-openai/route.ts # optional OpenAI-powered insights
+  api/
+    summary/route.ts    # always-available local insights
+    openai/route.ts     # optional OpenAI-powered insights
 components/
-PlayerSelect.tsx
-Stats.tsx
-SummaryCard.tsx
+  PlayerSelect.tsx
+  Stats.tsx
+  SummaryCard.tsx
 lib/
-prisma.ts # Prisma client
+  prisma.ts             # Prisma client
 prisma/
-schema.prisma # Event model
+  schema.prisma         # Event model
 scripts/
-ingest_chess.ts # Chess.com ingestion script
+  ingest_chess.ts       # Chess.com ingestion script
+
 
 
 ## 🧭 Future Roadmap
