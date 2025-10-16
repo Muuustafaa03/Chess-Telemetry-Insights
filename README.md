@@ -113,7 +113,7 @@ Railway (Database):
 2. Enable External Connection and copy the connection string.  
 3. Use that string in both local and Vercel `.env` (?sslmode=require).  
 
-## 📊 Project Structure
+📊 Project Structure
 
 app/
   api/
