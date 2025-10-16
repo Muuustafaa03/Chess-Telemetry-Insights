@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  service   String
+  type      String
+  route     String?
+  latencyMs Int?
+  status    Int?
+  createdAt DateTime @default(now())
+  player    String?    // NEW
+
+  @@index([createdAt])
+  @@index([player])
+}

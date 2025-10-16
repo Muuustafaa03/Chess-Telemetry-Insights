@@ -1,103 +1,85 @@
-import Image from "next/image";
+import Stats from "@/components/Stats";
+import PlayerSelect from "@/components/PlayerSelect";
+import SummaryCard from "@/components/SummaryCard"; // ← add
+import { prisma } from "@/lib/prisma";
 
-export default function Home() {
+function ymd(d: Date) { return d.toISOString().slice(0, 10); }
+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const selectedPlayer = typeof sp.player === "string" ? sp.player : undefined;
+
+  const now = new Date();
+  const since60 = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+  const since30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const since7  = new Date(now.getTime() -  7 * 24 * 60 * 60 * 1000);
+
+  const playersRaw = await prisma.event.findMany({
+    where: { service: "chess" },
+    select: { player: true },
+    distinct: ["player"],
+  });
+  const players = playersRaw.map(p => p.player).filter(Boolean) as string[];
+
+  const whereBase: any = { service: "chess", createdAt: { gte: since60 } };
+  if (selectedPlayer) whereBase.player = selectedPlayer;
+
+  const rows = await prisma.event.findMany({
+    where: whereBase,
+    orderBy: { createdAt: "asc" },
+    select: { createdAt: true, route: true, status: true },
+  });
+
+  const last7 = rows.filter(r => r.createdAt >= since7);
+  const total7d = last7.length;
+  const wins7d  = last7.filter(r => r.status === 1).length;
+  const winRate7d = total7d ? wins7d / total7d : 0;
+  const lastIngested = rows.length ? rows[rows.length - 1].createdAt.toISOString() : null;
+
+  const last30 = rows.filter(r => r.createdAt >= since30);
+  const dayMap = new Map<string, { games: number; wins: number }>();
+  for (const r of last30) {
+    const key = ymd(r.createdAt);
+    const e = dayMap.get(key) || { games: 0, wins: 0 };
+    e.games += 1;
+    if (r.status === 1) e.wins += 1;
+    dayMap.set(key, e);
+  }
+  for (let i = 30; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const key = ymd(d);
+    if (!dayMap.has(key)) dayMap.set(key, { games: 0, wins: 0 });
+  }
+  const daily = Array.from(dayMap.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, v]) => ({ date, games: v.games, wins: v.wins, winRate: v.games ? v.wins / v.games : 0 }));
+
+  const tcMap = new Map<string, { games: number; wins: number }>();
+  for (const r of rows) {
+    const k = (r.route || "/unknown").replace("/", "");
+    const e = tcMap.get(k) || { games: 0, wins: 0 };
+    e.games += 1;
+    if (r.status === 1) e.wins += 1;
+    tcMap.set(k, e);
+  }
+  const byTimeClass = Array.from(tcMap.entries())
+    .map(([timeClass, v]) => ({ timeClass, games: v.games, winRate: v.games ? v.wins / v.games : 0 }))
+    .sort((a, b) => b.games - a.games);
+
+  const kpis = { total7d, wins7d, winRate7d, lastIngested };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+    <main className="max-w-6xl mx-auto py-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Telemetry Insights — Chess</h1>
+        <PlayerSelect players={players} />
+      </div>
+      <Stats kpis={kpis} daily={daily} byTimeClass={byTimeClass} />
+      <SummaryCard /> {/* ← add */}
+    </main>
   );
 }
