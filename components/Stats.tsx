@@ -23,7 +23,7 @@ export default function Stats({
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <KpiCard label="Games (7d)" value={kpis.total7d.toString()} />
         <KpiCard label="Wins (7d)" value={kpis.wins7d.toString()} />
-        <KpiCard label="Win Rate (7d)" value={`${(kpis.winRate7d * 100).toFixed(0)}%`} />
+        <KpiCard label="Win Rate (7d)" value={`${(kpis.winRate7d * 100).toFixed(2)}%`} />
         <KpiCard label="Last Ingested" value={kpis.lastIngested ? new Date(kpis.lastIngested).toLocaleString() : "—"} />
       </div>
 
@@ -38,18 +38,22 @@ export default function Stats({
               <YAxis />
               <Tooltip
                 contentStyle={{
-                    backgroundColor: "#ffffff",   // white tooltip background
+                    backgroundColor: "#ffffff",
                     border: "1px solid #999",
                     borderRadius: "6px",
                     boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
                 }}
                 itemStyle={{
-                    color: "#000000",             // black for all value text
+                    color: "#000000",
                     fontWeight: 600,
                 }}
                 labelStyle={{
-                    color: "#000000",             // black date label text
+                    color: "#000000",
                     fontWeight: 700,
+                }}
+                formatter={(value: any, name: string) => {
+                  if (name === "winRate") return `${(value * 100).toFixed(2)}%`;
+                  return value;
                 }}
                 />
               <Legend />
@@ -70,7 +74,7 @@ export default function Stats({
             <XAxis
             dataKey="timeClass"
             tick={{
-                fill: "#000000",     // <-- make labels black
+                fill: "#000000",
                 fontSize: 13,
                 fontWeight: 700,
             }}
@@ -79,7 +83,7 @@ export default function Stats({
             />
               {/* Games on left axis; WinRate on right axis */}
               <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" domain={[0, 1]} />
+              <YAxis yAxisId="right" orientation="right" domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
               <Tooltip
                 contentStyle={{
                     backgroundColor: "#ffffff",
@@ -89,6 +93,10 @@ export default function Stats({
                 }}
                 itemStyle={{ color: "#000000", fontWeight: 600 }}
                 labelStyle={{ color: "#000000", fontWeight: 700 }}
+                formatter={(value: any, name: string) => {
+                  if (name === "Win Rate") return `${(value * 100).toFixed(2)}%`;
+                  return value;
+                }}
                 />
               <Legend />
               {/* Turquoise bars */}
@@ -98,7 +106,7 @@ export default function Stats({
           </ResponsiveContainer>
         </div>
         <p className="text-sm text-gray-500 mt-2">
-          Win rate is 0–1 scale (e.g., 0.62 = 62%).
+          Win rate displayed as percentage (hover for exact values).
         </p>
       </div>
     </div>

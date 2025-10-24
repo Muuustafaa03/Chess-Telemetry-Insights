@@ -1,9 +1,8 @@
-// app/api/summary/route.ts  (or the file you’re editing)
+// app/api/summary/route.ts
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";          // ✅ bring prisma back
+import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 
-// Force runtime execution in Next 15 dev/prod (no static caching)
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -14,7 +13,6 @@ export async function GET(req: Request) {
   const now = new Date();
   const since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  // ✅ typed filter; player is conditionally included via spread
   const where: Prisma.EventWhereInput = {
     service: "chess",
     createdAt: { gte: since },
@@ -29,8 +27,11 @@ export async function GET(req: Request) {
 
   const total = rows.length;
   const wins = rows.filter((r) => r.status === 1).length;
+  const draws = rows.filter((r) => r.status === 0).length;
+  const losses = rows.filter((r) => r.status === -1).length;
   const winRate = total ? wins / total : 0;
 
+  // By time control
   const byTc: Record<string, { g: number; w: number }> = {};
   for (const r of rows) {
     const k = (r.route || "/unknown").replace("/", "");
@@ -38,19 +39,27 @@ export async function GET(req: Request) {
     byTc[k].g += 1;
     if (r.status === 1) byTc[k].w += 1;
   }
+  
   const arr = Object.entries(byTc)
     .map(([k, v]) => ({ k, wr: v.g ? v.w / v.g : 0, g: v.g }))
     .sort((a, b) => b.g - a.g);
 
   const top = arr[0];
   const low = [...arr].sort((a, b) => a.wr - b.wr)[0];
-  const best = top ? `${top.k} (${Math.round(top.wr * 100)}% WR, ${top.g} games)` : "n/a";
-  const worst = low ? `${low.k} (${Math.round(low.wr * 100)}% WR)` : "n/a";
+  
+  const best = top ? `${top.k} (${(top.wr * 100).toFixed(2)}% WR, ${top.g} games)` : "n/a";
+  const worst = low ? `${low.k} (${(low.wr * 100).toFixed(2)}% WR)` : "n/a";
 
   const heuristic =
-    `• Played ${total} games, ${wins} wins (${Math.round(winRate * 100)}% WR).\n` +
-    `• Most volume: ${best}. Lowest win rate: ${worst}.\n` +
-    `• Action: focus 20–30 games on your best time control; review 5 losses from the weakest.`;
+    `📊 Last 7 Days Performance:\n\n` +
+    `• Played ${total} games: ${wins} wins, ${draws} draws, ${losses} losses (${(winRate * 100).toFixed(2)}% win rate)\n` +
+    `• Highest volume: ${best}\n` +
+    `• Weakest performance: ${worst}\n\n` +
+    `💡 Recommendation:\n` +
+    `Focus 20–30 games on your best time control to build consistency. Review 5 losses from your weakest time control to identify improvement areas.`;
 
-  return NextResponse.json({ insight: heuristic, source: "local" }, { status: 200 });
+  return NextResponse.json({ 
+    insight: heuristic, 
+    source: "local" 
+  }, { status: 200 });
 }
