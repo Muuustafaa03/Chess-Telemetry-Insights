@@ -1,8 +1,7 @@
-// components/PlayerSelect.tsx
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function PlayerSelect({ players }: { players: string[] }) {
   const router = useRouter();
@@ -11,19 +10,16 @@ export default function PlayerSelect({ players }: { players: string[] }) {
 
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-  const handleIngest = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAnalyze = async () => {
     if (!username.trim()) {
-      setError("Please enter a username");
+      setMessage({ text: "Please enter a username", type: "error" });
       return;
     }
 
     setLoading(true);
-    setError("");
-    setSuccess("");
+    setMessage(null);
 
     try {
       const res = await fetch("/api/ingest", {
@@ -35,83 +31,76 @@ export default function PlayerSelect({ players }: { players: string[] }) {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to ingest games");
+        setMessage({ text: data.error || "Failed to ingest games", type: "error" });
         return;
       }
 
-      setSuccess(data.message);
+      setMessage({ text: data.message || "Success!", type: "success" });
       setUsername("");
       
-      // Refresh the page to show new data
+      // Refresh the page after 1 second
       setTimeout(() => {
         router.refresh();
-        setSuccess("");
-      }, 2000);
-
-    } catch (err) {
-      setError("Network error. Please try again.");
+      }, 1000);
+    } catch {
+      setMessage({ text: "Network error. Please try again.", type: "error" });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Username Search Form */}
-      <form onSubmit={handleIngest} className="flex items-center gap-2">
+    <div className="space-y-4">
+      {/* Username Search */}
+      <div className="flex items-center gap-2">
         <input
           type="text"
           placeholder="Enter Chess.com username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
           disabled={loading}
-          className="border border-neutral-700 rounded-md px-3 py-1.5 bg-neutral-900 text-neutral-100 placeholder:text-neutral-500 disabled:opacity-50 min-w-[240px]"
+          className="border border-neutral-700 rounded-md px-3 py-1.5 bg-neutral-900 text-neutral-100 placeholder-neutral-500 disabled:opacity-50"
         />
         <button
-          type="submit"
+          onClick={handleAnalyze}
           disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 text-white px-4 py-1.5 rounded-md font-medium transition-colors"
+          className="px-4 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
         >
           {loading ? "Analyzing..." : "Analyze"}
         </button>
-      </form>
+      </div>
 
-      {/* Status Messages */}
-      {error && (
-        <div className="text-red-400 text-sm bg-red-950/30 border border-red-800 rounded px-3 py-2">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="text-green-400 text-sm bg-green-950/30 border border-green-800 rounded px-3 py-2">
-          {success}
+      {/* Status Message */}
+      {message && (
+        <div className={`text-sm p-2 rounded ${
+          message.type === "success" 
+            ? "bg-green-100 text-green-800 border border-green-300" 
+            : "bg-red-100 text-red-800 border border-red-300"
+        }`}>
+          {message.text}
         </div>
       )}
 
       {/* Player Filter Dropdown */}
-      {players.length > 0 && (
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-500">Filter by player:</label>
-          <select
-            className="border border-neutral-700 rounded-md px-2 py-1 bg-neutral-900 text-neutral-100"
-            value={current}
-            onChange={(e) => {
-              const v = e.target.value;
-              const q = new URLSearchParams(params.toString());
-              if (v === "all") q.delete("player");
-              else q.set("player", v);
-              router.push("/?" + q.toString());
-            }}
-          >
-            <option value="all">All Players</option>
-            {players.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        <label className="text-sm text-gray-500">Filter by player:</label>
+        <select
+          className="border border-neutral-700 rounded-md px-2 py-1 bg-neutral-900 text-neutral-100"
+          value={current}
+          onChange={(e) => {
+            const v = e.target.value;
+            const q = new URLSearchParams(params.toString());
+            if (v === "all") q.delete("player"); else q.set("player", v);
+            router.push("/?" + q.toString());
+          }}
+        >
+          <option value="all">All Players</option>
+          {players.map((p) => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }

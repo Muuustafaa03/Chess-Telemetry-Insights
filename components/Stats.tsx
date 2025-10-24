@@ -2,7 +2,7 @@
 
 import {
   ResponsiveContainer, CartesianGrid, XAxis, YAxis, Tooltip, Legend,
-  LineChart, Line, BarChart, Bar, ComposedChart
+  LineChart, Line, Bar, ComposedChart
 } from "recharts";
 
 type DailyData = { date: string; games: number; wins: number; winRate: number };
@@ -51,8 +51,8 @@ export default function Stats({
                     color: "#000000",
                     fontWeight: 700,
                 }}
-                formatter={(value: any, name: string) => {
-                  if (name === "winRate") return `${(value * 100).toFixed(2)}%`;
+                formatter={(value: number | string, name: string) => {
+                  if (name === "winRate") return `${(Number(value) * 100).toFixed(2)}%`;
                   return value;
                 }}
                 />
@@ -93,8 +93,8 @@ export default function Stats({
                 }}
                 itemStyle={{ color: "#000000", fontWeight: 600 }}
                 labelStyle={{ color: "#000000", fontWeight: 700 }}
-                formatter={(value: any, name: string) => {
-                  if (name === "Win Rate") return `${(value * 100).toFixed(2)}%`;
+                formatter={(value: number | string, name: string) => {
+                  if (name === "Win Rate") return `${(Number(value) * 100).toFixed(2)}%`;
                   return value;
                 }}
                 />

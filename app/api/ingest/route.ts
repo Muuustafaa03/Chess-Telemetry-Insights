@@ -4,15 +4,30 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+interface ChessComArchivesResponse {
+  archives?: string[];
+}
+
+interface ChessComGame {
+  white?: { username?: string; result?: string };
+  black?: { username?: string; result?: string };
+  time_class?: string;
+  end_time?: number;
+}
+
+interface ChessComMonthlyGamesResponse {
+  games?: ChessComGame[];
+}
+
 // Utility: retry fetch
-async function getJson(url: string, tries = 3): Promise<any> {
+async function getJson<T>(url: string, tries = 3): Promise<T> {
   for (let i = 0; i < tries; i++) {
     try {
       const res = await fetch(url);
       if (res.ok) return res.json();
       if (res.status === 404) throw new Error(`User not found: ${url}`);
-    } catch (err) {
-      if (i === tries - 1) throw err;
+    } catch (error) {
+      if (i === tries - 1) throw error;
     }
     await new Promise(r => setTimeout(r, 500 * (i + 1)));
   }
@@ -45,11 +60,11 @@ export async function POST(req: NextRequest) {
 
     // 1) Fetch monthly archives
     const archivesUrl = `https://api.chess.com/pub/player/${username}/games/archives`;
-    let archivesData;
+    let archivesData: ChessComArchivesResponse;
     
     try {
-      archivesData = await getJson(archivesUrl);
-    } catch (err) {
+      archivesData = await getJson<ChessComArchivesResponse>(archivesUrl);
+    } catch {
       return NextResponse.json(
         { error: `User '${username}' not found on Chess.com` },
         { status: 404 }
@@ -69,7 +84,7 @@ export async function POST(req: NextRequest) {
     let gamesIngested = 0;
 
     for (const url of targets) {
-      const data = await getJson(url);
+      const data = await getJson<ChessComMonthlyGamesResponse>(url);
       const games = data?.games || [];
 
       for (const g of games) {
