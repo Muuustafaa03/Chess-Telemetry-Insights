@@ -57,17 +57,57 @@ export async function GET(req: Request) {
   const top = arr[0];
   const low = [...arr].sort((a, b) => a.wr - b.wr)[0];
   
-  const best = top ? `${top.k} (${(top.wr * 100).toFixed(2)}% WR, ${top.g} games)` : "n/a";
-  const worst = low ? `${low.k} (${(low.wr * 100).toFixed(2)}% WR)` : "n/a";
+  // Calculate win streak
+  let currentStreak = 0;
+  let streakType = "none";
+  for (let i = rows.length - 1; i >= 0; i--) {
+    if (streakType === "none") {
+      if (rows[i].status === 1) {
+        streakType = "win";
+        currentStreak = 1;
+      } else if (rows[i].status === -1) {
+        streakType = "loss";
+        currentStreak = 1;
+      }
+    } else if (
+      (streakType === "win" && rows[i].status === 1) ||
+      (streakType === "loss" && rows[i].status === -1)
+    ) {
+      currentStreak++;
+    } else {
+      break;
+    }
+  }
 
-  // Heuristic fallback
-  const heuristic =
-    `📊 Last 7 Days Performance:\n\n` +
-    `• Played ${total} games: ${wins} wins, ${draws} draws, ${losses} losses (${(winRate * 100).toFixed(2)}% win rate)\n` +
-    `• Highest volume: ${best}\n` +
-    `• Weakest performance: ${worst}\n\n` +
-    `💡 Recommendation:\n` +
-    `Focus 20–30 games on your best time control to build consistency. Review 5 losses from your weakest time control to identify improvement areas.`;
+  // Chess-focused heuristic fallback
+  const best = top ? { tc: top.k, wr: top.wr, games: top.g } : null;
+  const worst = low ? { tc: low.k, wr: low.wr } : null;
+
+  let heuristic = "No games found in the last 7 days. Play some games to see insights!";
+  
+  if (total > 0 && best && worst) {
+    // Time control specific advice
+    let tcAdvice = "";
+    if (best.tc === "bullet") {
+      tcAdvice = "In bullet, focus on pre-moves in obvious positions and maintain piece activity over material.";
+    } else if (best.tc === "blitz") {
+      tcAdvice = "In blitz, prioritize fast opening development and avoid complicated tactics under time pressure.";
+    } else if (best.tc === "rapid") {
+      tcAdvice = "In rapid, take time to calculate tactical sequences and avoid impulsive moves in the middlegame.";
+    } else {
+      tcAdvice = `Your strongest format is ${best.tc}—continue playing this to maximize rating gains.`;
+    }
+
+    heuristic =
+      `♟️ Chess Performance (Last 7 Days)\n\n` +
+      `Record: ${wins}W-${draws}D-${losses}L (${(winRate * 100).toFixed(1)}% win rate)\n` +
+      `Most played: ${best.tc} (${best.games} games, ${(best.wr * 100).toFixed(1)}% WR)\n` +
+      `Weakest format: ${worst.tc} (${(worst.wr * 100).toFixed(1)}% WR)\n` +
+      `Current streak: ${currentStreak} ${streakType === "win" ? "wins" : "losses"}\n\n` +
+      `💡 Chess-Specific Tips:\n` +
+      `${tcAdvice}\n\n` +
+      `Focus on your strongest time control (${best.tc}) for rating gains. Review your last 3 losses in ${worst.tc} to identify tactical patterns.`;
+  }
 
   // Check for OpenAI credentials
   const { OPENAI_API_KEY, OPENAI_ORG, OPENAI_PROJECT } = process.env;
@@ -87,23 +127,27 @@ export async function GET(req: Request) {
       .join(", ");
 
     const prompt =
-      `You are a concise chess performance coach. Analyze this 7-day summary:\n\n` +
-      `Total Games: ${total}\n` +
-      `Record: ${wins}W-${draws}D-${losses}L (${(winRate * 100).toFixed(1)}% win rate)\n` +
-      `By Time Control: ${timeControlBreakdown}\n\n` +
-      `Provide exactly 3 bullet points (max 120 words total):\n` +
-      `1. Most notable pattern or trend\n` +
-      `2. Likely cause or weakness\n` +
-      `3. Specific actionable recommendation`;
+      `You are an expert chess coach analyzing a player's recent performance. Be specific about chess concepts.\n\n` +
+      `Data (Last 7 Days):\n` +
+      `Total: ${total} games (${wins}W-${draws}D-${losses}L, ${(winRate * 100).toFixed(1)}% win rate)\n` +
+      `Time Controls: ${timeControlBreakdown}\n` +
+      `Current Streak: ${currentStreak} ${streakType}${currentStreak > 1 ? 's' : ''}\n\n` +
+      `Provide exactly 3 chess-focused insights (max 150 words total):\n` +
+      `1. Performance pattern - mention specific time control strengths/weaknesses\n` +
+      `2. Strategic advice - reference opening preparation, tactical awareness, time management, or endgame technique\n` +
+      `3. Actionable training recommendation - be specific (e.g., "practice rook endgames", "review Sicilian Defense lines", "solve 20 tactics puzzles daily")`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You are a concise chess coach. Keep responses under 120 words with 3 bullets." },
+        { 
+          role: "system", 
+          content: "You are a chess coach. Focus on chess-specific concepts: openings, tactics, strategy, time management, endgames. Keep responses under 150 words with 3 clear points." 
+        },
         { role: "user", content: prompt }
       ],
-      temperature: 0.3,
-      max_tokens: 250,
+      temperature: 0.4,
+      max_tokens: 300,
     });
 
     const insight = completion.choices[0]?.message?.content?.trim() || heuristic;
@@ -111,7 +155,6 @@ export async function GET(req: Request) {
     
   } catch (error) {
     console.error("OpenAI API error:", error);
-    // Fallback to heuristic on any error
     return NextResponse.json({ insight: heuristic, source: "heuristic" }, { status: 200 });
   }
 }

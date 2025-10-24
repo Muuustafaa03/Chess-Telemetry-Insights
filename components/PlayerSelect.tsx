@@ -60,7 +60,12 @@ export default function PlayerSelect({ players }: { players: string[] }) {
           onChange={(e) => setUsername(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
           disabled={loading}
-          className="border border-neutral-700 rounded-md px-3 py-1.5 bg-neutral-900 text-neutral-100 placeholder-neutral-500 disabled:opacity-50"
+          className="border rounded-md px-3 py-1.5 disabled:opacity-50
+                     bg-white dark:bg-neutral-900 
+                     text-gray-900 dark:text-neutral-100 
+                     border-gray-300 dark:border-neutral-700 
+                     placeholder-gray-400 dark:placeholder-neutral-500
+                     focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
           onClick={handleAnalyze}
@@ -75,8 +80,8 @@ export default function PlayerSelect({ players }: { players: string[] }) {
       {message && (
         <div className={`text-sm p-2 rounded ${
           message.type === "success" 
-            ? "bg-green-100 text-green-800 border border-green-300" 
-            : "bg-red-100 text-red-800 border border-red-300"
+            ? "bg-green-100 text-green-800 border border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800" 
+            : "bg-red-100 text-red-800 border border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
         }`}>
           {message.text}
         </div>
@@ -84,9 +89,13 @@ export default function PlayerSelect({ players }: { players: string[] }) {
 
       {/* Player Filter Dropdown */}
       <div className="flex items-center gap-2">
-        <label className="text-sm text-gray-500">Filter by player:</label>
+        <label className="text-sm text-gray-600 dark:text-gray-400">Filter by player:</label>
         <select
-          className="border border-neutral-700 rounded-md px-2 py-1 bg-neutral-900 text-neutral-100"
+          className="border rounded-md px-2 py-1
+                     bg-white dark:bg-neutral-900 
+                     text-gray-900 dark:text-neutral-100
+                     border-gray-300 dark:border-neutral-700
+                     focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={current}
           onChange={(e) => {
             const v = e.target.value;

@@ -57,8 +57,8 @@ export default function Stats({
                 }}
                 />
               <Legend />
-              <Line type="monotone" dataKey="games" name="Games" dot={false} />
-              <Line type="monotone" dataKey="wins" name="Wins" dot={false} />
+              <Line type="monotone" dataKey="games" name="Games" stroke="#3b82f6" dot={false} />
+              <Line type="monotone" dataKey="wins" name="Wins" stroke="#10b981" dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -67,23 +67,36 @@ export default function Stats({
       {/* Win rate by time control */}
       <div className="rounded-2xl border p-4">
         <h2 className="text-lg font-semibold mb-2">Win rate by time control (last 60d)</h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Bars show game volume, line shows win rate percentage
+        </p>
         <div className="w-full h-72">
           <ResponsiveContainer>
-            <ComposedChart data={byTimeClass}>
+            <ComposedChart data={byTimeClass} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-            dataKey="timeClass"
-            tick={{
-                fill: "#000000",
-                fontSize: 13,
-                fontWeight: 700,
-            }}
-            axisLine={{ stroke: "#555" }}
-            tickLine={{ stroke: "#555" }}
-            />
-              {/* Games on left axis; WinRate on right axis */}
-              <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
+              <XAxis
+                dataKey="timeClass"
+                tick={{
+                    fill: "#000000",
+                    fontSize: 13,
+                    fontWeight: 700,
+                }}
+                axisLine={{ stroke: "#555" }}
+                tickLine={{ stroke: "#555" }}
+              />
+              {/* Games on left axis */}
+              <YAxis 
+                yAxisId="left" 
+                label={{ value: 'Games', angle: -90, position: 'insideLeft' }}
+              />
+              {/* Win Rate on right axis */}
+              <YAxis 
+                yAxisId="right" 
+                orientation="right" 
+                domain={[0, 1]} 
+                tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+                label={{ value: 'Win Rate', angle: 90, position: 'insideRight' }}
+              />
               <Tooltip
                 contentStyle={{
                     backgroundColor: "#ffffff",
@@ -97,17 +110,29 @@ export default function Stats({
                   if (name === "Win Rate") return `${(Number(value) * 100).toFixed(2)}%`;
                   return value;
                 }}
-                />
+              />
               <Legend />
-              {/* Turquoise bars */}
-              <Bar yAxisId="left" dataKey="games" name="Games" fill="#14b8a6" />
-              <Line yAxisId="right" type="monotone" dataKey="winRate" name="Win Rate" dot={false} />
+              {/* Teal bars for games */}
+              <Bar 
+                yAxisId="left" 
+                dataKey="games" 
+                name="Games" 
+                fill="#0d9488" 
+                barSize={60}
+              />
+              {/* Orange line for win rate */}
+              <Line 
+                yAxisId="right" 
+                type="monotone" 
+                dataKey="winRate" 
+                name="Win Rate" 
+                stroke="#f59e0b"
+                strokeWidth={3}
+                dot={{ fill: "#f59e0b", r: 4 }}
+              />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
-        <p className="text-sm text-gray-500 mt-2">
-          Win rate displayed as percentage (hover for exact values).
-        </p>
       </div>
     </div>
   );
